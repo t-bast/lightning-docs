@@ -919,11 +919,11 @@ The second and third points change the format of the commitment transaction to:
 If you squint really hard, you'll see that the change in the output scripts is only the addition
 of `1 OP_CHECKSEQUENCEVERIFY` to the outputs that were previously spendable without any delay.
 
-This ensures that there are **only two outputs** that can be used for CPFP: the newly added anchors.
-One of them can be used by us, the other by the remote participant. This ensures that whatever a
-malicious participant may do to prevent the commitment transaction from confirming in time, the
-honest participant always has an opportunity to leverage the CPFP carve-out rule to bump the fee
-at least once.
+This ensures that each party has **exactly one output** that can be used for CPFP: the newly added
+anchors. This way whatever a malicious participant may do to prevent the commitment transaction
+from confirming in time, they can only do it by adding child transactions to their own anchor, and
+the honest participant always has an opportunity to leverage the CPFP carve-out rule to bump the
+fee at least once.
 
 The anchor outputs have a relative timelock branch that allows anyone to spend them. The reason for
 this is that we want to be nice to the Bitcoin layer and avoid creating many tiny UTXOs that would
