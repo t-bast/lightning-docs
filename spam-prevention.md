@@ -15,6 +15,7 @@ spamming attempts.
 * [Proposals](#proposals)
   * [Naive upfront payment](#naive-upfront-payment)
   * [Reverse upfront payment](#reverse-upfront-payment)
+  * [Web of trust HTLC hold fees](#web-of-trust-htlc-hold-fees)
 
 ## Description of the attack
 
@@ -149,3 +150,30 @@ Open questions:
 * Does the fee need to be based on the time the HTLC is held?
 * What happens when a channel closes and HTLC-timeout has to be redeemed on-chain?
 * Can we implement this without exposing the route length to intermediate nodes?
+
+### Web of trust HTLC hold fees
+
+This proposal introduces fees depending on the amount of time HTLCs are kept pending.
+Nodes pay when *offering* HTLCs based on the following formula:
+
+```text
+hold_fee = lock_time * (fee_base + fee_rate * htlc_value)
+```
+
+The `fee_base` and `fee_rate` depend on the trust relationship between the two peers:
+
+* Nodes charge a high rate to nodes they don't know/trust
+* Over time, nodes observe their peers and may lower the fees if they have behaved correctly
+  for a long enough period of time
+* This ensures spamming is more costly to attackers, who have to either:
+  * spend sats to spam
+  * or spend time to build a reputation
+
+Drawbacks:
+
+* Barrier to entry (for new routing nodes) potentially leading to centralization
+* Correctly rating peers is hard: most of the metrics can be gamed by remote nodes to lower a
+  peer's score
+* Small griefing is possible: peers have an incentive to hold HTLCs longer to collect more fees:
+  this is true of all proposals that are based on pay-per-time held where the sender pays the fees
+* "Exit scam" type of attacks: malicious nodes behave correctly long enough, then launch an attack
