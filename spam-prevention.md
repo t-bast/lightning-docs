@@ -14,6 +14,7 @@ spamming attempts.
 * [Threat model](#threat-model)
 * [Proposals](#proposals)
   * [Naive upfront payment](#naive-upfront-payment)
+  * [Reverse upfront payment](#reverse-upfront-payment)
 
 ## Description of the attack
 
@@ -21,7 +22,7 @@ The attacker leverages the HTLC-timeout mechanism to lock up liquidity in the ne
 This attack doesn't directly cost money to routing nodes, but it wastes capital allocation and may
 prevent legitimate payments from going through.
 
-The attacker controls two nodes: `A1` and `A2`.
+The attacker controls two nodes: `A1` and `A2` (we'll refer to this attack as `controlled spam`).
 The attackers finds a long route between `A1` and `A2`, sends HTLCs through these routes and goes
 silent on the recipient's end (simulates a stuck HTLC):
 
@@ -49,6 +50,17 @@ HTLCs a channel can have (by default 483 HTLCs). By completely filling a channel
 (just above the dust limit) the attacker is able to lock the whole channel down at a very small cost.
 
 Note that the attacker may use the same node on both ends (`A1 = A2`).
+
+Also note that the attacker doesn't necessarily need to hold the HTLCs for a very long time; he can
+release them and repeat the same process instantly, or keep a constant stream of HTLCs to flood the
+network; we'll call this attack `short-lived controlled spam`.
+
+There is another variant of this attack that is worth considering. Instead of sending to a node he
+controls (`A2`), the attacker sends HTLCs to random nodes he does *not* control. These final nodes
+will instantly fail the HTLC (because it doesn't match any invoice in their DB) but the HTLCs will
+spend some time locked in channels commitments due to forwarding delays. The attacker can flood the
+network with a constant stream of such HTLCs to disrupt legitimate payments. We'll call this attack
+`uncontrolled spam`.
 
 ## Mitigation strategies available today
 
@@ -91,11 +103,49 @@ We summarize them here with their pros and cons to help future research progress
 
 ### Naive upfront payment
 
-The most obvious proposal is to require nodes to unconditionally pay a tiny amount to the next node
-when they want to relay an HTLC. Let's explore why this proposal does **not** work:
+The most obvious proposal is to require nodes to unconditionally pay a *fixed* tiny amount to the
+next node when they want to relay an HTLC. Let's explore why this proposal does **not** work:
 
 * the attacker will pay that fee at the first hop, but will receive it back at the last hop: it
   this doesn't cost him anything
 * this fee applies to every payment attempt: when a legitimate user is unlucky and tries multiple
   routes without success (potentially because of valid reasons such as liquidity issues downstream)
   he will have to pay that fee multiple times
+
+### Reverse upfront payment
+
+This proposal builds on the previous one, but reverses the flow. Nodes pay a fee for *receiving*
+HTLCs instead of *sending* them.
+
+```text
+A -----> B -----> C -----> D
+
+B pays A to receive the HTLC.
+Then C pays B to receive the forwarded HTLC.
+Then D pays C to receive the forwarded HTLC.
+```
+
+There must be a grace period during which no fees are paid; otherwise the `uncontrolled spam` attack
+allows the attacker to force all nodes in the route to pay fees while he's not paying anything.
+
+The fee cannot be the same at each hop, otherwise it's free for the attacker when he is at both
+ends of the payment route.
+
+This fee must increase as the HTLC travels downstream: this ensures that nodes that hold HTLCs
+longer are penalized more than nodes that fail them fast, and if a node has to hold an HTLC for a
+long time because it's stuck downstream, they will receive more fees than what they have to pay.
+
+The grace period cannot be the same at each hop either, otherwise the attacker can force Bob to be
+the only one to pay fees. Similarly to how we have `cltv_expiry_delta`, nodes must have a
+`grace_period_delta` and the `grace_period` must be bigger upstream than downstream.
+
+Drawbacks:
+
+* The attacker can still lock HTLCs for the duration of the `grace_period` and repeat the attack
+  continuously
+
+Open questions:
+
+* Does the fee need to be based on the time the HTLC is held?
+* What happens when a channel closes and HTLC-timeout has to be redeemed on-chain?
+* Can we implement this without exposing the route length to intermediate nodes?
