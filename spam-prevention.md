@@ -168,6 +168,9 @@ The `fee_base` and `fee_rate` depend on the trust relationship between the two p
 * This ensures spamming is more costly to attackers, who have to either:
   * spend sats to spam
   * or spend time to build a reputation
+* Hold fees can be implemented on the protocol-level, but it is also possible to
+  enforce the policy externally. For example: stop forwarding payments when the
+  hold fee budget is exhausted and require the peer to top up via keysend.
 
 Drawbacks:
 
