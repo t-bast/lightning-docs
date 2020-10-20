@@ -115,7 +115,7 @@ next node when they want to relay an HTLC. Let's explore why this proposal does 
 
 ### Reverse upfront payment
 
-This proposal builds on the previous one, but reverses the flow. Nodes pay a fee for *receiving*
+This [proposal](https://lists.linuxfoundation.org/pipermail/lightning-dev/2020-February/002547.html) builds on the previous one, but reverses the flow. Nodes pay a fee for *receiving*
 HTLCs instead of *sending* them.
 
 ```text
@@ -153,7 +153,7 @@ Open questions:
 
 ### Web of trust HTLC hold fees
 
-This proposal introduces fees depending on the amount of time HTLCs are kept pending.
+This [proposal](https://lists.linuxfoundation.org/pipermail/lightning-dev/2020-October/002826.html) introduces fees depending on the amount of time HTLCs are kept pending.
 Nodes pay when *offering* HTLCs based on the following formula:
 
 ```text
