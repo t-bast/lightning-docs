@@ -106,6 +106,7 @@ And we must avoid creating opportunities for attackers to:
 * make routing nodes lose non-negligible funds
 * steal money (even tiny amounts) from honest nodes
 * more easily discover their position in a payment path
+* introduce third-party channel closure vectors (e.g Alice closing a channel between Bob and Caroll)
 
 ## Proposals
 
@@ -206,6 +207,13 @@ Considering the upcoming deployment of public watchtowers, a LN node may have to
 per-channel update to avoid a watchtower ressource DoS. A malicious counterparty continously
 updating a channel may force the victim to exhaust its watchtower credit, thus knocking-out
 victim revocation protection.
+
+If a malicious HTLC sender/relayer have to pay a fixed fee to the victim, it creates a higher
+bound on victim watchtower budget. Additional watchtower coverage beyond what this fixed fee
+afford has to be paid from victim pocket.
+
+Eltoo is likely to solve this issue by restraining watchtower per-update resource cost to a
+bandwidth one only.
 
 # Sources
 
