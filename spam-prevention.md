@@ -15,6 +15,7 @@ spamming attempts.
 * [Proposals](#proposals)
   * [Naive upfront payment](#naive-upfront-payment)
   * [Reverse upfront payment](#reverse-upfront-payment)
+  * [Bidirectional upfront payment](#bidirectional-upfront-payment)
   * [Web of trust HTLC hold fees](#web-of-trust-htlc-hold-fees)
 
 ## Description of the attack
