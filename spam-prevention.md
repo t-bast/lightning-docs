@@ -138,18 +138,115 @@ long time because it's stuck downstream, they will receive more fees than what t
 
 The grace period cannot be the same at each hop either, otherwise the attacker can force Bob to be
 the only one to pay fees. Similarly to how we have `cltv_expiry_delta`, nodes must have a
-`grace_period_delta` and the `grace_period` must be bigger upstream than downstream.
+`hold_grace_period_delta` and the `hold_grace_period` must be bigger upstream than downstream.
 
 Drawbacks:
 
-* The attacker can still lock HTLCs for the duration of the `grace_period` and repeat the attack
-  continuously
+* The attacker can still lock HTLCs for the duration of the `hold_grace_period` and repeat the
+  attack continuously
 
 Open questions:
 
 * Does the fee need to be based on the time the HTLC is held?
 * What happens when a channel closes and HTLC-timeout has to be redeemed on-chain?
 * Can we implement this without exposing the route length to intermediate nodes?
+
+### Bidirectional upfront payment
+
+This [proposal](https://lists.linuxfoundation.org/pipermail/lightning-dev/2020-October/002862.html)
+builds on the two previous proposals and combines them. Nodes pay both a forward and a backwards
+upfront fee, but the backwards one is refunded if HTLCs are settled quickly.
+
+```text
+A -----> B -----> C -----> D
+```
+
+We add a `hold_grace_period_delta` field to `channel_update` (in seconds).
+We add two new fields in the tlv extension of `update_add_htlc`:
+
+* `hold_grace_period` (seconds)
+* `hold_fees` (msat)
+
+We add an `outgoing_hold_grace_period` field in the onion per-hop payload.
+
+When nodes receive an `update_add_htlc`, they verify that:
+
+* `hold_fees` is not unreasonable large
+* `hold_grace_period` is not unreasonably small or large
+* `hold_grace_period` - `outgoing_hold_grace_period` >= `hold_grace_period_delta`
+
+Otherwise they immediately fail the HTLC instead of relaying it.
+
+For the example we assume all nodes use `hold_grace_period_delta = 10`.
+
+We add a forward upfront payment of 1 msat (fixed) that is paid unconditionally when offering an HTLC.
+We add a backwards upfront payment of `hold_fees` that is paid when receiving an HTLC, but refunded
+if the HTLC is settled before the `hold_grace_period` ends (see footnotes about this).
+
+* A sends an HTLC to B:
+  * `hold_grace_period = 100 sec`
+  * `hold_fees = 5 msat`
+  * `next_hold_grace_period = 90 sec`
+  * forward upfront payment: 1 msat is deduced from A's main output and added to B's main output
+  * backwards upfront payment: 5 msat are deduced from B's main output and added to A's main output
+* B forwards the HTLC to C:
+  * `hold_grace_period = 90 sec`
+  * `hold_fees = 6 msat`
+  * `next_hold_grace_period = 80 sec`
+  * forward upfront payment: 1 msat is deduced from B's main output and added to C's main output
+  * backwards upfront payment: 6 msat are deduced from C's main output and added to B's main output
+* C forwards the HTLC to D:
+  * `hold_grace_period = 80 sec`
+  * `hold_fees = 7 msat`
+  * `next_hold_grace_period = 70 sec`
+  * forward upfront payment: 1 msat is deduced from C's main output and added to D's main output
+  * backwards upfront payment: 7 msat are deduced from D's main output and added to C's main output
+
+* Scenario 1: D settles the HTLC quickly:
+  * all backwards upfront payments are refunded (returned to the respective main outputs)
+  * only the forward upfront payments have been paid (to protect against `uncontrolled spam`)
+
+* Scenario 2: D settles the HTLC after the grace period:
+  * D's backwards upfront payment is not refunded
+  * If C and B relay the settlement upstream quickly (before `hold_grace_period_delta`) their backwards
+    upfront payments are refunded
+  * all the forward upfront payments have been paid (to protect against `uncontrolled spam`)
+
+* Scenario 3: C delays the HTLC:
+  * D settles before its `grace_period`, so its backwards upfront payment is refunded by C
+  * C delays before settling upstream: it can ensure B will not get refunded, but C will not get
+    refunded either so B gains the difference in backwards upfront payments (which protects against
+    `controlled spam`)
+  * all the forward upfront payments have been paid (to protect against `uncontrolled spam`)
+
+* Scenario 4: the channel B <-> C closes:
+  * D settles before its `grace_period`, so its backwards upfront payment is refunded by C
+  * for whatever reason (malicious or not) the B <-> C channel closes
+  * this ensures that C's backwards upfront payment is paid to B
+  * if C publishes an HTLC-fulfill quickly, B may have his backwards upfront payment refunded by A
+  * if B is forced to wait for his HTLC-timeout, his backwards upfront payment will not be refunded
+    but it's ok because B got C's backwards upfront payment
+  * all the forward upfront payments have been paid (to protect against `uncontrolled spam`)
+
+The backwards upfront payment is fixed instead of scaled based on the time an HTLC is left pending;
+it's slightly less penalizing for spammers, but is less complex and introduces less potential
+griefing against honest nodes. With the scaling approach, an honest node that has its channel
+unilaterally closed is too heavily penalized (because it has to pay for the maximum hold duration).
+
+Drawbacks:
+
+* If done naively, this mechanism may allow intermediate nodes to deanonymize sender/recipient.
+  Randomizing the base `grace_period` and `hold_fees` may remove that probing vector.
+* Handling the `grace_period` will be a pain:
+  * when do you start counting: when you send/receive `commit_sig` or `revoke_and_ack`?
+  * what happens if there is a disconnection (how do you account for the delay of reconnecting)?
+  * what happens if the remote settles after the `grace_period`, but refunds himself when sending
+    his `commit_sig` (making it look like from his point of view he settled before the
+    `grace_period`)? In that case the behavior should probably be to give your peers some leeway
+    and let them get away with it, but record it. If they're doing it too often, close channels and
+    ban them; stealing upfront fees should never be worth losing channels.
+* If the forward upfront payment is a network constant (1 msat?), do we need to add a mechanism to
+  upgrade it?
 
 ### Web of trust HTLC hold fees
 
