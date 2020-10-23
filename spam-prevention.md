@@ -248,6 +248,9 @@ Drawbacks:
     ban them; stealing upfront fees should never be worth losing channels.
 * If the forward upfront payment is a network constant (1 msat?), do we need to add a mechanism to
   upgrade it?
+* Short-lived `controlled spam` is still free for the attacker: we should probably make the forward
+  upfront payment a decrementing value at each hop (committed inside the onion) to penalize this
+  type of attacks
 
 ### Web of trust HTLC hold fees
 
