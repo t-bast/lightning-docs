@@ -66,14 +66,20 @@ network with a constant stream of such HTLCs to disrupt legitimate payments. We'
 
 ## Mitigation strategies available today
 
-It is not possible today to fully prevent this type of attacks, but properly configuring channels
-can help partially mitigate them:
+It is not possible today to fully prevent this type of attacks, but we can make the attacker's job
+harder by properly configuring channels:
 
-* use a reasonable value for `htlc_minimum_msat` (1 sat is **not** a reasonable value for channels
-  with a big capacity; it may be ok for small channels though)
+* the attacker needs to lock at least `htlc_minimum_msat * max_accepted_htlcs` of his own funds to
+  completely fill a channel, so you should use a reasonable value for `htlc_minimum_msat` (1 sat is
+  **not** a reasonable value for channels with a big capacity; it may be ok for smaller channels
+  though)
 * open redundant unannounced channels to your most profitable peers
 * implement relaying policies to avoid filling up channels: always keep X% of your HTLC slots
   available, reserved for high-value HTLCs
+
+Long-lived controlled spams might also be mitigated by a relay policy rejecting too far in the
+future CLTV locktime or requiring a lower `cltv_expiry_delta`. This later mitigation may downgrade
+relay node security.
 
 ## Threat model
 
@@ -84,24 +90,51 @@ We want to defend against attackers that have the following capabilities:
 * they are running modified (malicious) versions of LN node implementations
 * they are able to quickly create many seemingly unrelated nodes
 * they may already have long-lived channels (good reputation)
+* they might probe in real-time channel balances to adjust their spams
+* they might send long-held HTLCs, those ones unobservable from the set of honest long-held HTLCs
 
 There are important properties of Lightning that we must absolutely preserve:
 
 * payer and payee's anonymity
 * trustless payments
-* decentralization
-* minimal (reasonable) barrier to entry
+* minimal (reasonable) barrier to entry as routing node
 * minimal overhead/cost for legitimate payments
+* minimal overhead to declare public paths to the network
+* incentive to successfully relay payments
 
 And we must avoid creating opportunities for attackers to:
 
 * penalize an honest node's relationship with its own honest peers
 * make routing nodes lose non-negligible funds
+* steal money (even tiny amounts) from honest senders
+* more easily discover their position in a payment path
+* introduce third-party channel closure vectors (e.g Alice closing a channel between Bob and Caroll)
 
 ## Proposals
 
 Many ideas have been proposed over the years, exploring different trade-offs.
 We summarize them here with their pros and cons to help future research progress.
+
+## Provable Blaming
+
+The oldest [proposal](https://lists.linuxfoundation.org/pipermail/lightning-dev/2015-August/000135.html) discusses
+to provide proof of channel closures in case of misbehaving peers not failing/succeeding HTLC
+quickly. E.g with Alice sending a HTLC to Caroll through Bob, if Caroll doesn't respond within a
+short amount of time, Bob should have close his channel with her and present the closing transaction
+as a proof to Alice to clear himself from the routing failure.
+
+This scheme introduces a diverse set of concernes : requirement to understand channel types across
+links, privacy breakage, channel frailty, ...
+
+## Local Reputation Tracking
+
+This [proposal](https://lists.linuxfoundation.org/pipermail/lightning-dev/2018-May/001232.html) discusses
+a reputation system for nodes. A node will keep a real-time accounting of its routing fees earned
+thanks to the relayed HTLCs from or to its neighboring peers. After every routing failure, faultive
+peer reputation is downgraded until reaching some threshold triggering a channel closure.
+
+This scheme doesn't prevent reputation contamination. From a node viewpoint, failure of your direct
+peer or from upstream peer can't be dissociated.
 
 ### Naive upfront payment
 
@@ -281,3 +314,45 @@ Drawbacks:
 * Small griefing is possible: peers have an incentive to hold HTLCs longer to collect more fees:
   this is true of all proposals that are based on pay-per-time held where the sender pays the fees
 * "Exit scam" type of attacks: malicious nodes behave correctly long enough, then launch an attack
+
+# Adjacent Issues
+
+Solving channel spamming might help in other corner cases of LN.
+
+## Costless channel probing
+
+A node continuously probing channels across the network may discover the payment traffic of routing
+nodes and thus globally track LN payment traffic.
+
+## Watchtower Credit Exhaustion
+
+Considering the upcoming deployment of public watchtowers, a LN node may have to pay a cost
+per-channel update to avoid a watchtower ressource DoS. A malicious counterparty continously
+updating a channel may force the victim to exhaust its watchtower credit, thus knocking-out
+victim revocation protection.
+
+If a malicious HTLC sender/relayer have to pay a fixed fee to the victim, it creates a higher
+bound on victim watchtower budget. Additional watchtower coverage beyond what this fixed fee
+afford has to be paid from victim pocket.
+
+Eltoo is likely to solve this issue by restraining watchtower per-update resource cost to a
+bandwidth one only.
+
+# Sources
+
+## Mailing List (chronological order)
+
+* [https://lists.linuxfoundation.org/pipermail/lightning-dev/2015-August/000135.html Loop attack
+* [https://lists.linuxfoundation.org/pipermail/lightning-dev/2016-November/000648.html Analysis: alternative DoS prevention concept]
+* [https://lists.linuxfoundation.org/pipermail/lightning-dev/2018-May/001232.html Mitigations for loop attacks]
+* [https://lists.linuxfoundation.org/pipermail/lightning-dev/2019-November/002275.html A proposal for upfront payment]
+* [https://lists.linuxfoundation.org/pipermail/lightning-dev/2020-February/002547.html A proposal for upfront payment (reverse upfront)]
+* [https://lists.linuxfoundation.org/pipermail/lightning-dev/2020-April/002608.html Proof-of-closure as griefing attack mitigation]
+* [https://lists.linuxfoundation.org/pipermail/lightning-dev/2020-October/002826.html Hold fees: 402 Payment Required for Lightning itself]
+
+## Papers
+
+* [https://arxiv.org/pdf/1904.10253.pdf Discharged Payment Channels: Quantifying the Lightning Network's Resilience to Topology-Based Attacks]
+* [https://eprint.iacr.org/2019/1149.pdf LockDown: Balance Availability Attack Against Lightning Network Channels]
+* [https://arxiv.org/pdf/2002.06564.pdf Congestion Attacks in Payment Channel Networks]
+* [https://arxiv.org/pdf/2004.00333.pdf Probing Channel Balances in the Lightning Network]
