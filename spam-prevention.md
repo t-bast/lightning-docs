@@ -13,6 +13,8 @@ spamming attempts.
 * [Mitigation strategies available today](#mitigation-strategies-available-today)
 * [Threat model](#threat-model)
 * [Proposals](#proposals)
+  * [Provable Blaming](#provable-blaming)
+  * [Local Reputation Tracking](#local-reputation-tracking)
   * [Naive upfront payment](#naive-upfront-payment)
   * [Reverse upfront payment](#reverse-upfront-payment)
   * [Bidirectional upfront payment](#bidirectional-upfront-payment)
@@ -115,7 +117,7 @@ And we must avoid creating opportunities for attackers to:
 Many ideas have been proposed over the years, exploring different trade-offs.
 We summarize them here with their pros and cons to help future research progress.
 
-## Provable Blaming
+### Provable Blaming
 
 The oldest [proposal](https://lists.linuxfoundation.org/pipermail/lightning-dev/2015-August/000135.html) discusses
 to provide proof of channel closures in case of misbehaving peers not failing/succeeding HTLC
@@ -126,7 +128,7 @@ as a proof to Alice to clear himself from the routing failure.
 This scheme introduces a diverse set of concernes : requirement to understand channel types across
 links, privacy breakage, channel frailty, ...
 
-## Local Reputation Tracking
+### Local Reputation Tracking
 
 This [proposal](https://lists.linuxfoundation.org/pipermail/lightning-dev/2018-May/001232.html) discusses
 a reputation system for nodes. A node will keep a real-time accounting of its routing fees earned
@@ -342,17 +344,17 @@ bandwidth one only.
 
 ## Mailing List (chronological order)
 
-* [https://lists.linuxfoundation.org/pipermail/lightning-dev/2015-August/000135.html Loop attack
-* [https://lists.linuxfoundation.org/pipermail/lightning-dev/2016-November/000648.html Analysis: alternative DoS prevention concept]
-* [https://lists.linuxfoundation.org/pipermail/lightning-dev/2018-May/001232.html Mitigations for loop attacks]
-* [https://lists.linuxfoundation.org/pipermail/lightning-dev/2019-November/002275.html A proposal for upfront payment]
-* [https://lists.linuxfoundation.org/pipermail/lightning-dev/2020-February/002547.html A proposal for upfront payment (reverse upfront)]
-* [https://lists.linuxfoundation.org/pipermail/lightning-dev/2020-April/002608.html Proof-of-closure as griefing attack mitigation]
-* [https://lists.linuxfoundation.org/pipermail/lightning-dev/2020-October/002826.html Hold fees: 402 Payment Required for Lightning itself]
+* [Loop attack](https://lists.linuxfoundation.org/pipermail/lightning-dev/2015-August/000135.html)
+* [Analysis: alternative DoS prevention concept](https://lists.linuxfoundation.org/pipermail/lightning-dev/2016-November/000648.html)
+* [Mitigations for loop attacks](https://lists.linuxfoundation.org/pipermail/lightning-dev/2018-May/001232.html)
+* [A proposal for upfront payment](https://lists.linuxfoundation.org/pipermail/lightning-dev/2019-November/002275.html)
+* [A proposal for upfront payment (reverse upfront)](https://lists.linuxfoundation.org/pipermail/lightning-dev/2020-February/002547.html)
+* [Proof-of-closure as griefing attack mitigation](https://lists.linuxfoundation.org/pipermail/lightning-dev/2020-April/002608.html)
+* [Hold fees: 402 Payment Required for Lightning itself](https://lists.linuxfoundation.org/pipermail/lightning-dev/2020-October/002826.html)
 
 ## Papers
 
-* [https://arxiv.org/pdf/1904.10253.pdf Discharged Payment Channels: Quantifying the Lightning Network's Resilience to Topology-Based Attacks]
-* [https://eprint.iacr.org/2019/1149.pdf LockDown: Balance Availability Attack Against Lightning Network Channels]
-* [https://arxiv.org/pdf/2002.06564.pdf Congestion Attacks in Payment Channel Networks]
-* [https://arxiv.org/pdf/2004.00333.pdf Probing Channel Balances in the Lightning Network]
+* [Discharged Payment Channels: Quantifying the Lightning Network's Resilience to Topology-Based Attacks](https://arxiv.org/pdf/1904.10253.pdf)
+* [LockDown: Balance Availability Attack Against Lightning Network Channels](https://eprint.iacr.org/2019/1149.pdf)
+* [Congestion Attacks in Payment Channel Networks](https://arxiv.org/pdf/2002.06564.pdf)
+* [Probing Channel Balances in the Lightning Network](https://arxiv.org/pdf/2004.00333.pdf)
