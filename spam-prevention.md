@@ -7,6 +7,12 @@ Unfortunately, this property can be abused by malicious actors to spam the netwo
 routing nodes cannot easily figure out if the payments they are relaying are genuine payments or
 spamming attempts.
 
+An evil routing node can use this property to ensure that its competitors' channels are unable to
+route payments: this may force payers to route through the evil node's channels instead, earning
+him fees and potentially making it economically unsustainable for his competitors. An even more
+evil entity could make the whole public lightning network unusable if it has access to a fraction
+of the network's capacity.
+
 ## Table of Contents
 
 * [Description of the attack](#description-of-the-attack)
