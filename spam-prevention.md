@@ -99,7 +99,7 @@ We want to defend against attackers that have the following capabilities:
 * they are able to quickly create many seemingly unrelated nodes
 * they may already have long-lived channels (good reputation)
 * they might probe in real-time channel balances to adjust their spams
-* they might send long-held HTLCs, those ones unobservable from the set of honest long-held HTLCs
+* they might send long-held HTLCs that are indistinguishable from honest long-held HTLCs
 
 There are important properties of Lightning that we must absolutely preserve:
 
@@ -369,7 +369,7 @@ nodes and thus globally track LN payment traffic.
 ## Watchtower Credit Exhaustion
 
 Considering the upcoming deployment of public watchtowers, a LN node may have to pay a cost
-per-channel update to avoid a watchtower ressource DoS. A malicious counterparty continously
+per-channel update to avoid a watchtower resource DoS. A malicious counterparty continously
 updating a channel may force the victim to exhaust its watchtower credit, thus knocking-out
 victim revocation protection.
 
