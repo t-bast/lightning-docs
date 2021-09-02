@@ -16,13 +16,13 @@ We ignore segwit subtleties and fields that aren't necessary for our global unde
   * [Commitment transaction](#commitment-transaction)
   * [HTLC transactions](#htlc-transactions)
   * [Closing transaction](#closing-transaction)
-* [Future work](#future-work)
+* [Lightning transactions with anchor outputs](#lightning-transactions-with-anchor-outputs)
   * [Replace by fee](#replace-by-fee)
   * [Child pays for parent](#child-pays-for-parent)
   * [Bumping Lightning transactions](#bumping-lightning-transactions)
   * [Anchor outputs](#anchor-outputs)
-  * [RBF Pinning](#rbf-pinning)
-  * [Alternative proposal](#alternative-proposal)
+* [RBF Pinning](#rbf-pinning)
+* [Alternative proposal](#alternative-proposal)
 * [Resources](#resources)
 
 ## Bitcoin transactions
@@ -547,10 +547,9 @@ looks like:
 
 NB: the `sequence` is set to `0xFFFFFFFF` to ensure all timelocks are disabled.
 
-## Future work
+## Lightning transactions with anchor outputs
 
-Now that you know what Lightning transactions look like today, let's explore what they might look
-like in the near future. The current transactions format works great *if the following assumptions
+The transactions format we've just described works great *if the following assumptions
 hold*:
 
 1. nodes are receiving (on-chain) blocks without too much delay
@@ -695,10 +694,10 @@ it confirm faster, and this has been an area of active research.
 
 ### Anchor outputs
 
-The [anchor outputs proposal](https://github.com/lightningnetwork/lightning-rfc/pull/688) tries to
-address these shortcomings by leveraging the CPFP carve-out rule and a better use of sighash flags.
+The [anchor outputs proposal](https://github.com/lightningnetwork/lightning-rfc/pull/688) addresses
+these shortcomings by leveraging the CPFP carve-out rule and a better use of sighash flags.
 
-At a high-level, it consists of three main changes:
+At a high-level, it consists of four main changes:
 
 1. Update HTLC transactions to use `SIGHASH_SINGLE | SIGHASH_ANYONECANPAY`. This lets you RBF your
   HTLC transactions by adding new inputs/outputs to raise the fees.
@@ -708,8 +707,10 @@ At a high-level, it consists of three main changes:
   `anchor outputs`. This ensures only these two outputs can be used for the CPFP carve-out; all
   other outputs cannot be used for CPFP, they have to wait for the commitment transaction to be
   confirmed before they can be spent.
+4. Set the HTLC transactions fees to 0: this protects against a fee siphoning attack described
+  [here](https://lists.linuxfoundation.org/pipermail/lightning-dev/2020-September/002796.html).
 
-Let's focus on the first point. An HTLC-success transaction will look like:
+Let's focus on the first point. An HTLC-success transaction now looks like:
 
 ```json
 {
@@ -979,7 +980,7 @@ The overall transaction graph now looks like:
                                        +---> to A with revocation key
 ```
 
-### RBF Pinning
+## RBF Pinning
 
 While the anchor outputs proposal solves the issue of a slow-to-confirm commitment transaction, it
 doesn't solve other issues related to transaction pinning and may even provide more attack surface
@@ -1016,7 +1017,7 @@ htlc outputs in Alice's commitment transaction. The linked email thread proposes
 symmetric, by only allowing Mallory to spend htlc outputs via a pre-signed transaction that requires
 signatures from both participants, and adding anchor outputs to HTLC transactions.
 
-### Alternative proposal
+## Alternative proposal
 
 Let's summarize our requirements and detail a proposal that combines ideas from the two previous
 sections.
