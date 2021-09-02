@@ -22,6 +22,7 @@ This makes a channel party commit to a `scriptpubkey` (output locking script) up
 - Electrum: since [this PR from January 2021](https://github.com/spesmilo/electrum/pull/6875#issuecomment-757900498), most likely part of v4.1.
 - C-Lightning: since [v0.7.3 from November 2019](https://medium.com/blockstream/the-latest-c-lightning-0-7-3-3efc107f092b)
 - LND: since [this PR merged in December 2019](https://github.com/lightningnetwork/lnd/pull/3655), part of [v0.9.0 from January 2020 according to release notes](https://github.com/lightningnetwork/lnd/releases/tag/v0.9.0-beta).
+- Eclair: since [this PR merged in July 2121](https://github.com/ACINQ/eclair/pull/1846)
 
 ## `gossip_queries` and `gossip_queries_ex`
 
@@ -64,11 +65,12 @@ You can use payment_secret without necessarily using MPP, though it is a require
 - Electrum: sent/accepted since [4.0.1 from July 2020](https://github.com/spesmilo/electrum/blob/922a48f2b74bd6c58682f9d5b6163c4fbd45981a/RELEASE-NOTES#L107)
 - LND: supported since v0.10.0 (see below), **required** in incoming payments since [v0.12.0](https://github.com/lightningnetwork/lnd/pull/4752) (unreleased as of January 7th, 2020):  All generated invoices will include the `s` field.
 
-## Multi-part payments (MPP)
+## `basic_mpp` (multi-part payments)
 
 This splits a payment into multiple pieces, that all have the same payment hash (so it is [vulnerable to a straddling attack](https://lists.linuxfoundation.org/pipermail/lightning-dev/2018-February/000993.html)). This means that the theoretical maximum payment amount can be higher. A receiver doesn't know how many parts a payment is split into. To avoid an attack where one part the MPP payment will never arrive and the HTLC consumes resources over too long, receivers must fail incoming HTLCs after a reasonable timeout, usually 60 seconds.
 
 ### Implementations
+
 All listed implementations that have send support, also have receive support.
 
 - C-Lightning: Send support since [v0.9.0 from July 2020](https://github.com/ElementsProject/lightning/releases/tag/v0.9.0)
