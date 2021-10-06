@@ -174,7 +174,7 @@ receives such transactions, it can then act on them (extract preimage / commitme
 When we detect that our HTLC-timeout doesn't confirm in time, we can incentivize random nodes to
 discover and share preimages by giving them a reward.
 
-This can come into free forms:
+This can come in three forms:
 
 * Broadcast pay-for-preimage transactions on-chain hoping they'll be claimed and you learn the
   preimage in a block (`OP_SHA256 <hash_whose_preimage_bob_wants> OP_EQUAL`)
