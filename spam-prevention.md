@@ -24,6 +24,7 @@ of the network's capacity.
   * [Naive upfront payment](#naive-upfront-payment)
   * [Reverse upfront payment](#reverse-upfront-payment)
   * [Bidirectional upfront payment](#bidirectional-upfront-payment)
+  * [Hold-time-dependent bidirectional upfront payment](#hold-time-dependent-bidirectional-upfront-payment)
   * [Web of trust HTLC hold fees](#web-of-trust-htlc-hold-fees)
 
 ## Description of the attack
@@ -326,6 +327,24 @@ Drawbacks:
     `grace_period`)? In that case the behavior should probably be to give your peers some leeway
     and let them get away with it, but record it. If they're doing it too often, close channels and
     ban them; stealing upfront fees should never be worth losing channels.
+
+### Hold-time-dependent bidirectional upfront payment
+
+One characteristic of bidirectional upfront payments as described above is that
+the `hold_fees` are time-independent. If an htlc doesn't resolve within the
+`grace_period`, the receiver of the htlc will be forced to pay the full hold
+fee. The hold fee should cover the expenses for locking up an htlc for the
+maximum duration (could be 2000 blocks), so this can be a significant penalty.
+Applications such as atomic onchain/offchain swaps (Lightning Loop and others)
+rely on locking funds for some time and could get expensive with a fixed hold
+fee.
+
+A different variant of bidirectional upfront payments uses a time-proportional hold
+fee rate to address the limitation above. It aims to relate the fees paid more
+directly to the actual costs incurred and thereby reduce the number of
+parameters.
+
+The complete proposal can be found [here](https://lists.linuxfoundation.org/pipermail/lightning-dev/2021-February/002958.html).
 
 ### Web of trust HTLC hold fees
 
