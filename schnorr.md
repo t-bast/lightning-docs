@@ -120,7 +120,7 @@ This results in an elegant scheme that looks very similar to standard schnorr si
 PA = pa*G                               -> public key of participant A
 PB = pb*G                               -> public key of participant B
 L = sorted(PA, PB)                      -> sorted list of participants public keys
-P = H(L || PA)*PA + H(L || PB)*PB       -> combined public key
+P = H(H(L) || PA)*PA + PB               -> combined public key
 
 NonceGenA (run by participant A):
   ra1 = {0;1}^256
@@ -181,7 +181,7 @@ Musig2 can be combined with adaptor signatures:
 PA = pa*G                               -> public key of participant A
 PB = pb*G                               -> public key of participant B
 L = sorted(PA, PB)                      -> sorted list of participants public keys
-P = H(L || PA)*PA + H(L || PB)*PB       -> combined public key
+P = H(H(L) || PA)*PA + PB               -> combined public key
 
 NonceGenA (run by participant A):
   ra1 = {0;1}^256
