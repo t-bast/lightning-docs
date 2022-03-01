@@ -10,6 +10,7 @@ In this article, we dive into how it works and some of the advanced schemes it u
 * [Adaptor signatures](#adaptor-signatures)
 * [Musig2](#musig2)
 * [Musig2 adaptor signatures](#musig2-adaptor-signatures)
+* [Musig2 BIP 32 derivation](#musig2-bip-32-derivation)
 
 ## Schnorr signatures
 
