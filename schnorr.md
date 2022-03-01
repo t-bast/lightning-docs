@@ -119,7 +119,7 @@ This results in an elegant scheme that looks very similar to standard schnorr si
 ```text
 PA = pa*G                               -> public key of participant A
 PB = pb*G                               -> public key of participant B
-L = sorted(PA, PB)                      -> sorted list of participants public keys
+L = (PA, PB)                            -> sorted list of participants public keys
 P = H(H(L) || PA)*PA + PB               -> combined public key
 
 NonceGenA (run by participant A):
@@ -151,7 +151,7 @@ SignB (run by participant B):
   R = RA1 + RB1 + x*(RA2 + RB2)
   rb = rb1 + x*rb2
   e = H(R || P || m)
-  sb = rb + e*H(L || PB)*pb
+  sb = rb + e*pb
   (sb, R)                 -> participant B's partial signature
 
 Combine (communication round 2):
@@ -162,8 +162,8 @@ Verify:
   e = H(R || P || m)
   R' = s*G - e*P 
      = (sa + sb)*G - e*P
-     = (ra + e*H(L || PA)*pa)*G + (rb + e*H(L || PB)*pb)*G - e*P
-     = (ra + rb)*G + e*(H(L || PA)*pa + H(L || PB)*pb)*G - e*P
+     = (ra + e*H(L || PA)*pa)*G + (rb + e*pb)*G - e*P
+     = (ra + rb)*G + e*(H(L || PA)*pa + pb)*G - e*P
      = R + e*P - e*P
      = R
   -> this is a valid schnorr signature
@@ -180,7 +180,7 @@ Musig2 can be combined with adaptor signatures:
 
 PA = pa*G                               -> public key of participant A
 PB = pb*G                               -> public key of participant B
-L = sorted(PA, PB)                      -> sorted list of participants public keys
+L = (PA, PB)                            -> sorted list of participants public keys
 P = H(H(L) || PA)*PA + PB               -> combined public key
 
 NonceGenA (run by participant A):
@@ -216,7 +216,7 @@ SignB (run by participant B):
   R = RA1 + RB1 + x*(RA2 + RB2)
   rb = rb1 + x*rb2
   e = H(R + T || P || m)
-  sb = rb + e*H(L || PB)*pb
+  sb = rb + e*pb
   (sb, R, T)                 -> participant B's adaptor signature
 
 Participant A can verify participant B's adaptor signature before sending its partial signature:
@@ -230,4 +230,74 @@ Complete (run by participant B):
 
 Extract (run by participant A):
   t = s - sa - sb
+```
+
+## Musig2 BIP 32 derivation
+
+Musig2 can be used with [BIP 32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki) derivation.
+The trick is that the individual keys will not change, we're only tweaking the aggregated public key.
+
+```text
+PA = pa*G                               -> public key of participant A
+PB = pb*G                               -> public key of participant B
+L = (PA, PB)                            -> sorted list of participants public keys
+P = H(H(L) || PA)*PA + PB               -> combined master public key
+Both participants agree on a chaincode c
+
+The combined public key at index i can be computed:
+  I = H(c, P || i)
+  IL = I[0:32]
+  IR = I[33:64]
+  Pi = P + IL*G
+  ci = IR
+
+Participants create partial signatures for this child combined public key with the following steps.
+These are the same steps as vanilla Musig2 with Pi instead of P.
+
+NonceGenA (run by participant A):
+  ra1 = {0;1}^256
+  ra2 = {0;1}^256
+  RA1 = ra1*G
+  RA2 = ra2*G
+
+NonceGenB (run by participant B):
+  rb1 = {0;1}^256
+  rb2 = {0;1}^256
+  RB1 = rb1*G
+  RB2 = rb2*G
+
+NonceExchange (communication round 1):
+  Participant A sends RA1, RA2 to participant B
+  Participant B sends RB1, RB2 to participant A
+
+SignA (run by participant A):
+  x = H(Pi || RA1 + RB1 || RA2 + RB2 || m)
+  R = RA1 + RB1 + x*(RA2 + RB2)
+  ra = ra1 + x*ra2
+  e = H(R || Pi || m)
+  sa = ra + e*H(L || PA)*pa
+  (sa, R)                 -> participant A's partial signature
+
+SignB (run by participant B):
+  x = H(Pi || RA1 + RB1 || RA2 + RB2 || m)
+  R = RA1 + RB1 + x*(RA2 + RB2)
+  rb = rb1 + x*rb2
+  e = H(R || Pi || m)
+  sb = rb + e*pb
+  (sb, R)                 -> participant B's partial signature
+
+Combine (communication round 2):
+  e = H(R || Pi || m)     -> this step can be done with anyone able to compute this
+  s = sa + sb + e*IL
+  (s, R)                  -> valid schnorr signature for public key Pi
+
+Verify:
+  e = H(R || Pi || m)
+  R' = s*G - e*Pi 
+     = (sa + sb + e*IL)*G - e*Pi
+     = (ra + e*H(L || PA)*pa)*G + (rb + e*pb)*G + e*IL*G - e*Pi
+     = (ra + rb)*G + e*(H(L || PA)*pa + pb + IL)*G - e*Pi
+     = R + e*Pi - e*Pi
+     = R
+  -> this is a valid schnorr signature
 ```
