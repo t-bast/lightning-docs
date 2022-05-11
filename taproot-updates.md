@@ -96,8 +96,8 @@ The commitment transaction will then become:
           "tapleaf": "
             # funds go back to the other channel participant after 1 block
             <remote_pubkey>
-            OP_CHECKSIG
-            OP_CHECKSEQUENCEVERIFY
+            OP_CHECKSIGVERIFY
+            1 OP_CHECKSEQUENCEVERIFY
           "
       }
     },
@@ -136,14 +136,15 @@ The commitment transaction will then become:
           "tapleaf_1": "
             # funds go back to us via a second-stage HTLC-timeout transaction (which contains an absolute delay)
             # NB: we also need the remote signature, which prevents us from unilaterally changing the HTLC-timeout transaction
-            <remote_htlcpubkey> OP_CHECKSIGVERIFY <local_htlcpubkey> OP_CHECKSIG
+            <remote_htlcpubkey> OP_CHECKSIGVERIFY <local_htlcpubkey> OP_CHECKSIGVERIFY
+            1 OP_CHECKSEQUENCEVERIFY
           ",
           "tapleaf_2": "
             # funds go to the remote node if it has the payment preimage.
             OP_HASH160 <RIPEMD160(payment_hash)> OP_EQUALVERIFY
             <remote_htlcpubkey>
-            OP_CHECKSIG
-            OP_CHECKSEQUENCEVERIFY
+            OP_CHECKSIGVERIFY
+            1 OP_CHECKSEQUENCEVERIFY
           "
       }
     },
@@ -159,13 +160,14 @@ The commitment transaction will then become:
             # funds go to us via a second-stage HTLC-success transaction once we have the payment preimage
             # NB: we also need the remote signature, which prevents us from unilaterally changing the HTLC-success transaction
             OP_HASH160 <RIPEMD160(payment_hash)> OP_EQUALVERIFY
-            <remote_htlcpubkey> OP_CHECKSIGVERIFY <local_htlcpubkey> OP_CHECKSIG
+            <remote_htlcpubkey> OP_CHECKSIGVERIFY <local_htlcpubkey> OP_CHECKSIGVERIFY
+            1 OP_CHECKSEQUENCEVERIFY
           ",
           "tapleaf_2": "
             # funds go to the remote node after an absolute delay (timeout)
             <remote_htlcpubkey>
-            OP_CHECKSIG
-            OP_CHECKSEQUENCEVERIFY
+            OP_CHECKSIGVERIFY
+            1 OP_CHECKSEQUENCEVERIFY
             <cltv_expiry>
             OP_CHECKLOCKTIMEVERIFY
             OP_DROP
@@ -282,12 +284,14 @@ structure (or something similar) to our commitment transaction:
   "tapleaf_1": "
     # funds go back to us via a second-stage PTLC-timeout transaction (which contains an absolute delay)
     # NB: we need the remote signature, which prevents us from unilaterally changing the PTLC-timeout transaction
-    <remote_ptlcpubkey> OP_CHECKSIGVERIFY <local_ptlcpubkey> OP_CHECKSIG
+    <remote_ptlcpubkey> OP_CHECKSIGVERIFY <local_ptlcpubkey> OP_CHECKSIGVERIFY
+    1 OP_CHECKSEQUENCEVERIFY
   ",
   "tapleaf_2": "
     # funds go to the remote node via a second-stage Claim-PTLC-success transaction by completing an adaptor sig, revealing the payment secret
     # NB: we don't use musig2 here because it would force local and remote signatures to use the same sighash flags
-    <local_ptlcpubkey> OP_CHECKSIGVERIFY <remote_ptlcpubkey> OP_CHECKSIG
+    <local_ptlcpubkey> OP_CHECKSIGVERIFY <remote_ptlcpubkey> OP_CHECKSIGVERIFY
+    1 OP_CHECKSEQUENCEVERIFY
   "
 }
 ```
