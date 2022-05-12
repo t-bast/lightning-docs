@@ -136,7 +136,7 @@ The commitment transaction will then become:
           "tapleaf_1": "
             # funds go back to us via a second-stage HTLC-timeout transaction (which contains an absolute delay)
             # NB: we also need the remote signature, which prevents us from unilaterally changing the HTLC-timeout transaction
-            <remote_htlcpubkey> OP_CHECKSIGVERIFY <local_htlcpubkey> OP_CHECKSIG
+            <remote_htlcpubkey> OP_CHECKSIGVERIFY <local_htlcpubkey> OP_CHECKSIGVERIFY
             1 OP_CHECKSEQUENCEVERIFY
           ",
           "tapleaf_2": "
@@ -160,16 +160,17 @@ The commitment transaction will then become:
             # funds go to us via a second-stage HTLC-success transaction once we have the payment preimage
             # NB: we also need the remote signature, which prevents us from unilaterally changing the HTLC-success transaction
             OP_HASH160 <RIPEMD160(payment_hash)> OP_EQUALVERIFY
-            <remote_htlcpubkey> OP_CHECKSIGVERIFY <local_htlcpubkey> OP_CHECKSIG
+            <remote_htlcpubkey> OP_CHECKSIGVERIFY <local_htlcpubkey> OP_CHECKSIGVERIFY
             1 OP_CHECKSEQUENCEVERIFY
           ",
           "tapleaf_2": "
             # funds go to the remote node after an absolute delay (timeout)
             <remote_htlcpubkey>
             OP_CHECKSIGVERIFY
+            1 OP_CHECKSEQUENCEVERIFY
             <cltv_expiry>
             OP_CHECKLOCKTIMEVERIFY
-            1 OP_CHECKSEQUENCEVERIFY
+            OP_DROP
           "
       }
     },
@@ -195,7 +196,7 @@ A taproot HTLC-success transaction looks like:
       "txid": "...",
       "vout": 42,
       "scriptSig": "<payment_preimage> <remotehtlcsig> <localhtlcsig>",
-      "sequence": 0
+      "sequence": 1
     }
   ],
   "vout": [
@@ -230,7 +231,7 @@ A taproot HTLC-timeout transaction looks like:
       "txid": "...",
       "vout": 42,
       "scriptSig": "<remotehtlcsig> <localhtlcsig>",
-      "sequence": 0
+      "sequence": 1
     }
   ],
   "vout": [
@@ -283,13 +284,13 @@ structure (or something similar) to our commitment transaction:
   "tapleaf_1": "
     # funds go back to us via a second-stage PTLC-timeout transaction (which contains an absolute delay)
     # NB: we need the remote signature, which prevents us from unilaterally changing the PTLC-timeout transaction
-    <remote_ptlcpubkey> OP_CHECKSIGVERIFY <local_ptlcpubkey> OP_CHECKSIG
+    <remote_ptlcpubkey> OP_CHECKSIGVERIFY <local_ptlcpubkey> OP_CHECKSIGVERIFY
     1 OP_CHECKSEQUENCEVERIFY
   ",
   "tapleaf_2": "
     # funds go to the remote node via a second-stage Claim-PTLC-success transaction by completing an adaptor sig, revealing the payment secret
     # NB: we don't use musig2 here because it would force local and remote signatures to use the same sighash flags
-    <local_ptlcpubkey> OP_CHECKSIGVERIFY <remote_ptlcpubkey> OP_CHECKSIG
+    <local_ptlcpubkey> OP_CHECKSIGVERIFY <remote_ptlcpubkey> OP_CHECKSIGVERIFY
     1 OP_CHECKSEQUENCEVERIFY
   "
 }
@@ -333,7 +334,7 @@ We simply add two new types of outputs to the commit tx (PTLC offered / PTLC rec
       |        +------------------------+
       +------->|      commit tx B       |
                +------------------------+
-                 |  |  |  |  |  |  |  |  
+                 |  |  |  |  |  |  |  |
                  |  |  |  |  |  |  |  | A's main output
                  |  |  |  |  |  |  |  +-----------------> to A after a 1-block relative delay
                  |  |  |  |  |  |  |
@@ -388,7 +389,7 @@ We simply add two new types of outputs to the commit tx (PTLC offered / PTLC rec
                  |                      +---> to A with revocation key
                  |
                  |      (B's RBF inputs) ---+
-                 |                          |                                        +---> to B after relative delay  
+                 |                          |                                        +---> to B after relative delay
                  |                          +---->+-----------------+                |
                  |                    +---------->| PTLC-success tx |----------------+
                  | PTLC received by B |           +-----------------+                |
