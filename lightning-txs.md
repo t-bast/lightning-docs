@@ -103,8 +103,8 @@ away a UTXO but have no control whatsoever on where it will be sent.
 There are proposals to add a flag that doesn't sign any of the inputs, relying only on script
 compatibility to ensure transaction validity. There are currently two variations around that idea:
 
-* [SIGHASH_NOINPUT](https://github.com/bitcoin/bips/blob/master/bip-0118.mediawiki)
-* [SIGHASH_ANYPREVOUT](https://github.com/ajtowns/bips/blob/bip-anyprevout/bip-anyprevout.mediawiki)
+* [SIGHASH_NOINPUT](https://lists.linuxfoundation.org/pipermail/bitcoin-dev/2016-February/012460.html)
+* [SIGHASH_ANYPREVOUT](https://github.com/bitcoin/bips/blob/master/bip-0118.mediawiki)
 
 ### Absolute locktime
 
