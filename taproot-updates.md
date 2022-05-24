@@ -136,12 +136,12 @@ The commitment transaction will then become:
           "tapleaf_1": "
             # funds go back to us via a second-stage HTLC-timeout transaction (which contains an absolute delay)
             # NB: we also need the remote signature, which prevents us from unilaterally changing the HTLC-timeout transaction
-            <remote_htlcpubkey> OP_CHECKSIGVERIFY <local_htlcpubkey> OP_CHECKSIGVERIFY
+            <local_htlcpubkey> OP_CHECKSIGVERIFY <remote_htlcpubkey> OP_CHECKSIGVERIFY
             1 OP_CHECKSEQUENCEVERIFY
           ",
           "tapleaf_2": "
             # funds go to the remote node if it has the payment preimage.
-            OP_HASH160 <RIPEMD160(payment_hash)> OP_EQUALVERIFY
+            OP_SIZE 32 OP_EQUALVERIFY OP_HASH160 <RIPEMD160(payment_hash)> OP_EQUALVERIFY
             <remote_htlcpubkey>
             OP_CHECKSIGVERIFY
             1 OP_CHECKSEQUENCEVERIFY
@@ -159,8 +159,8 @@ The commitment transaction will then become:
           "tapleaf_1": "
             # funds go to us via a second-stage HTLC-success transaction once we have the payment preimage
             # NB: we also need the remote signature, which prevents us from unilaterally changing the HTLC-success transaction
-            OP_HASH160 <RIPEMD160(payment_hash)> OP_EQUALVERIFY
-            <remote_htlcpubkey> OP_CHECKSIGVERIFY <local_htlcpubkey> OP_CHECKSIGVERIFY
+            OP_SIZE 32 OP_EQUALVERIFY OP_HASH160 <RIPEMD160(payment_hash)> OP_EQUALVERIFY
+            <local_htlcpubkey> OP_CHECKSIGVERIFY <remote_htlcpubkey> OP_CHECKSIGVERIFY
             1 OP_CHECKSEQUENCEVERIFY
           ",
           "tapleaf_2": "
@@ -195,7 +195,7 @@ A taproot HTLC-success transaction looks like:
     {
       "txid": "...",
       "vout": 42,
-      "scriptSig": "<payment_preimage> <remotehtlcsig> <localhtlcsig>",
+      "scriptSig": "<remotehtlcsig> <localhtlcsig> <payment_preimage>",
       "sequence": 1
     }
   ],
@@ -318,7 +318,7 @@ We can see a few problems emerge from that two steps process:
   transactions that let the remote peer claim PTLCs from the local commitment
 * claiming successful PTLCs from the remote peer's commitment now requires using RBF and sighash
   flags similar to anchor outputs HTLC transactions (`sighash_single | sighash_anyonecanpay` trick)
-* before signing a commitment update, peers must obtain from their counterpary adaptor signatures
+* before signing a commitment update, peers must obtain from their counterparty adaptor signatures
   for their pending received PTLCs in the future remote commitment
 
 Let's now detail a strawman, high-level proposal that enables PTLCs.
