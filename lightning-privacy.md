@@ -455,7 +455,7 @@ Bob is an intermediate node in what looks to him like a normal payment. He only 
 * the payment goes to Terry or another unknown node after Terry
 * Bob does not know that trampoline is being used
 
-When Terry receives the payment, he discovers that he must find a route to Terry and forward the
+When Terry receives the payment, he discovers that he must find a route to Ted and forward the
 payment to him. He only learns that:
 
 * the payment could come from Bob or another unknown node before Bob
