@@ -571,7 +571,7 @@ Ted sends the payment onwards:
 +--------------------------------------------------+                                                       +--------------------------------------------------+
 ```
 
-Carol is an intermediate node in what looks to him like a normal payment. She only learns that:
+Carol is an intermediate node in what looks to her like a normal payment. She only learns that:
 
 * the payment could come from Ted or another unknown node before Ted
 * the payment goes to Dave or another unknown node after Dave
