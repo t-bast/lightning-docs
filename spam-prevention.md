@@ -129,7 +129,7 @@ We summarize them here with their pros and cons to help future research progress
 The oldest [proposal](https://lists.linuxfoundation.org/pipermail/lightning-dev/2015-August/000135.html) discusses
 to provide proof of channel closures in case of misbehaving peers not failing/succeeding HTLC
 quickly. E.g with Alice sending a HTLC to Caroll through Bob, if Caroll doesn't respond within a
-short amount of time, Bob should have close his channel with her and present the closing transaction
+short amount of time, Bob should close his channel with her and present the closing transaction
 as a proof to Alice to clear himself from the routing failure.
 
 This scheme introduces a diverse set of concernes : requirement to understand channel types across
