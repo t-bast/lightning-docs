@@ -31,7 +31,7 @@ However, when the channel is closed, we have to reveal that it is using a 2-of-2
 is a strong indication that this may be a lightning channel.
 
 Fortunately, this is very easy to fix with Taproot. Instead of using a p2wsh output, we will use
-[Musig2](./schnorr.md) with a key path spend, which will be indistiguishable from a normal single
+[Musig2](./schnorr.md) with a key path spend, which will be indistinguishable from a normal single
 signature output.
 
 However, there are two ways that a lightning channel can be closed: either cooperatively, where
